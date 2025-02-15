@@ -1,5 +1,6 @@
 name: Build
 on: [push]
+
 jobs:
   python-install-dependency:
     runs-on: ubuntu-latest
@@ -8,7 +9,6 @@ jobs:
         uses: actions/checkout@v4
       - name: Install dependecies
         run: pip install -r requirements.txt 
-
 
   python-formatting:
      needs: python-install-dependency
