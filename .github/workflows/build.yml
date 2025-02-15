@@ -40,4 +40,4 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements.txt
       - name: Run pytest
-        run: python -m pytest --log-level=DEBUG src/test/. -vv
+        run: python -m pytest --log-level=DEBUG tests/ -vv
