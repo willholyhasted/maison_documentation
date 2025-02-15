@@ -3,10 +3,7 @@ from flask import Flask, request, jsonify
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
-from dotenv import load_dotenv
-
-# Load environment variables from .env file
-load_dotenv()
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -17,88 +14,134 @@ DB_USER = os.environ.get('DB_USER')
 DB_PASS = os.environ.get('DB_PASS')
 
 def get_db_connection():
-    try:
-        return psycopg2.connect(
-            host=DB_HOST,
-            database=DB_NAME,
-            user=DB_USER,
-            password=DB_PASS
-        )
-    except psycopg2.Error as e:
-        print(f"Unable to connect to database: {e}")
-        raise Exception(f"Database connection failed: {str(e)}")
+    return psycopg2.connect(
+        host=DB_HOST,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASS
+    )
 
 # Create the table if it doesn't exist
 def init_db():
-    try:
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute('''
-            CREATE TABLE IF NOT EXISTS persons (
-                first_name VARCHAR(100) PRIMARY KEY,
-                second_name VARCHAR(100) NOT NULL
-            )
-        ''')
-        conn.commit()
-    except Exception as e:
-        print(f"Database initialization failed: {e}")
-        raise
-    finally:
-        if 'cur' in locals():
-            cur.close()
-        if 'conn' in locals():
-            conn.close()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS documents (
+            document_id SERIAL PRIMARY KEY,
+            image TEXT NOT NULL,  -- This will store the blob ID
+            datetime_uploaded TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            property_id INTEGER NOT NULL,
+            buyer_id INTEGER NOT NULL,
+            seller_id INTEGER NOT NULL,
+            uploaded_by VARCHAR(50) CHECK (uploaded_by IN ('buyer', 'seller')),
+            document_type VARCHAR(50) NOT NULL
+        )
+    ''')
+    conn.commit()
+    cur.close()
+    conn.close()
 
 # Initialize the database when the app starts
 with app.app_context():
-    try:
-        init_db()
-    except Exception as e:
-        print(f"Application startup failed: {e}")
-        # You might want to exit the application here if DB init is critical
-        # import sys
-        # sys.exit(1)
+    init_db()
 
-@app.route('/person', methods=['POST'])
-def add_person():
+@app.route('/documents', methods=['POST'])
+def add_document():
     data = request.get_json()
+    required_fields = ['image', 'property_id', 'buyer_id', 'seller_id', 
+                      'uploaded_by', 'document_type']
+    
+    # Validate input
+    if not all(field in data for field in required_fields):
+        return jsonify({"error": "Missing required fields"}), 400
+    
+    if data['uploaded_by'] not in ['buyer', 'seller']:
+        return jsonify({"error": "uploaded_by must be either 'buyer' or 'seller'"}), 400
+
     conn = get_db_connection()
     cur = conn.cursor()
     try:
-        cur.execute(
-            "INSERT INTO persons (first_name, second_name) VALUES (%s, %s)",
-            (data['first_name'], data['second_name'])
-        )
+        cur.execute('''
+            INSERT INTO documents 
+            (image, property_id, buyer_id, seller_id, uploaded_by, document_type)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            RETURNING document_id
+        ''', (
+            data['image'],
+            data['property_id'],
+            data['buyer_id'],
+            data['seller_id'],
+            data['uploaded_by'],
+            data['document_type']
+        ))
+        document_id = cur.fetchone()[0]
         conn.commit()
-        return jsonify({"message": "Person added successfully"}), 201
+        return jsonify({
+            "message": "Document added successfully",
+            "document_id": document_id
+        }), 201
     except psycopg2.Error as e:
         return jsonify({"error": str(e)}), 400
     finally:
         cur.close()
         conn.close()
 
-@app.route('/person/<first_name>', methods=['GET'])
-def get_person(first_name):
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT * FROM persons WHERE first_name = %s", (first_name,))
-    person = cur.fetchone()
-    cur.close()
-    conn.close()
+@app.route('/documents/query', methods=['GET'])
+def query_documents():
+    # Get query parameters
+    uploaded_by = request.args.get('uploaded_by')
+    property_id = request.args.get('property_id')
+    buyer_id = request.args.get('buyer_id')
+    seller_id = request.args.get('seller_id')
     
-    if person:
-        return jsonify(person)
-    return jsonify({"error": "Person not found"}), 404
-
-@app.route('/persons', methods=['GET'])
-def get_all_persons():
+    # Build query conditions
+    conditions = []
+    params = []
+    
+    if uploaded_by:
+        conditions.append("uploaded_by = %s")
+        params.append(uploaded_by)
+    if property_id:
+        conditions.append("property_id = %s")
+        params.append(property_id)
+    if buyer_id:
+        conditions.append("buyer_id = %s")
+        params.append(buyer_id)
+    if seller_id:
+        conditions.append("seller_id = %s")
+        params.append(seller_id)
+    
+    # Construct the WHERE clause
+    where_clause = " AND ".join(conditions) if conditions else "TRUE"
+    
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    cur.execute("SELECT * FROM persons")
-    persons = cur.fetchall()
-    cur.close()
-    conn.close()
-    return jsonify(list(persons))
+    try:
+        query = f"""
+            SELECT document_id, image, datetime_uploaded, 
+                   property_id, buyer_id, seller_id, 
+                   uploaded_by, document_type
+            FROM documents
+            WHERE {where_clause}
+            ORDER BY datetime_uploaded DESC
+        """
+        cur.execute(query, params)
+        documents = cur.fetchall()
+        
+        # Convert datetime objects to string for JSON serialization
+        for doc in documents:
+            doc['datetime_uploaded'] = doc['datetime_uploaded'].isoformat()
+        
+        return jsonify({
+            "count": len(documents),
+            "documents": documents
+        })
+    except psycopg2.Error as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        cur.close()
+        conn.close()
+
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5001)
+    app.run(host='0.0.0.0', port=5000)
