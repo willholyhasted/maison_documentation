@@ -40,4 +40,9 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements.txt
       - name: Run pytest
+        env:
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASS: ${{ secrets.DB_PASS }}
         run: python -m pytest --log-level=DEBUG tests/ -vv
