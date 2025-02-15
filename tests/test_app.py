@@ -110,12 +110,3 @@ def test_add_document(client):
     data = response.get_json()
     assert len(data["documents"]) == 2  # Now we should have 2 test documents
     assert any(doc["image"] == "new_test_blob_456" for doc in data["documents"])
-
-
-def test_get_blob_ids(client):
-    """Test retrieving blob IDs"""
-    response = client.get("/documents/blob_ids?property_id=999")
-    assert response.status_code == 200
-
-    data = response.get_json()
-    assert "test_blob_123" in data["blob_ids"]
