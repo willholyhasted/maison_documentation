@@ -3,6 +3,9 @@ from flask import Flask, request, jsonify
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 
@@ -15,7 +18,11 @@ DB_PASS = os.environ.get("DB_PASS")
 
 def get_db_connection():
     return psycopg2.connect(
-        host=DB_HOST, database=DB_NAME, user=DB_USER, password=DB_PASS
+        host=DB_HOST,
+        database=DB_NAME,
+        user=DB_USER,
+        password=DB_PASS,
+        sslmode="require",  # Add this for Azure PostgreSQL
     )
 
 
@@ -45,6 +52,11 @@ def init_db():
 # Initialize the database when the app starts
 with app.app_context():
     init_db()
+
+
+@app.route("/")
+def index():
+    return "Hello, World! This is the documents service. And it is working!"
 
 
 @app.route("/documents", methods=["POST"])
@@ -155,4 +167,5 @@ def query_documents():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5001)
+    port = int(os.environ.get("PORT", 5001))
+    app.run(host="0.0.0.0", port=port)
