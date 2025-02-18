@@ -97,9 +97,14 @@ def add_document():
         print(f"Missing fields: {missing_fields}")
         return jsonify({"error": f"Missing required fields: {missing_fields}"}), 400
 
-    if data["uploaded_by"] not in ["buyer", "seller"]:
+    if data["uploaded_by"] not in ["buyer", "seller", ""]:
         print(f"Invalid uploaded_by value: {data['uploaded_by']}")
-        return jsonify({"error": "uploaded_by must be either 'buyer' or 'seller'"}), 400
+        return (
+            jsonify(
+                {"error": "uploaded_by must be either 'buyer' or 'seller' or empty"}
+            ),
+            400,
+        )
 
     # Read file binary data
     file_data = file.read()
