@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Documentation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            line-height: 1.6;
+        }
+        h1, h2, h3 {
+            color: #333;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Documentation</h1>
+    <p>This API allows you to manage documents, including uploading and querying them.</p>
+
+    <h2>Endpoints</h2>
+
+    <h3>1. Add Document</h3>
+    <p><strong>POST /documents</strong></p>
+    <p>Uploads a new document.</p>
+    <h4>Request Body:</h4>
+    <pre>
+    {
+        "file": <file>,  // The document file (multipart/form-data)
+        "property_id": <integer>,
+        "buyer_id": <integer>,
+        "seller_id": <integer>,
+        "uploaded_by": <string>,  // "buyer" or "seller"
+        "document_tag": <string>
+    }
+    </pre>
+    <h4>Response:</h4>
+    <pre>
+    {
+        "message": "Document added successfully",
+        "document_id": <integer>
+    }
+    </pre>
+
+    <h3>2. Query Documents</h3>
+    <p><strong>GET /documents/query</strong></p>
+    <p>Retrieves documents based on optional filters.</p>
+    <h4>Query Parameters:</h4>
+    <pre>
+    ?uploaded_by=<string>  // "buyer" or "seller"
+    &property_id=<integer>
+    &buyer_id=<integer>
+    &seller_id=<integer>
+    &document_tag=<string>
+    </pre>
+    <h4>Response:</h4>
+    <pre>
+    {
+        "count": <integer>,
+        "documents": [
+            {
+                "document_id": <integer>,
+                "filename": <string>,
+                "file_type": <string>,
+                "image_url": <string>,  // Base64 encoded image
+                "datetime_uploaded": <string>,
+                "property_id": <integer>,
+                "buyer_id": <integer>,
+                "seller_id": <integer>,
+                "uploaded_by": <string>,
+                "document_tag": <string>
+            }
+        ]
+    }
+    </pre>
+
+    <h2>Example Usage</h2>
+    <h3>Adding a Document</h3>
+    <pre>
+    curl -X POST http://127.0.0.1:5001/documents \
+        -F "file=@/path/to/document.pdf" \
+        -F "property_id=123" \
+        -F "buyer_id=456" \
+        -F "seller_id=789" \
+        -F "uploaded_by=buyer" \
+        -F "document_tag=contract"
+    </pre>
+
+    <h3>Querying Documents</h3>
+    <pre>
+    curl "http://127.0.0.1:5001/documents/query?property_id=123"
+    </pre>
+
+    <h2>Notes</h2>
+    <p>The API uses Azure PostgreSQL for database storage.</p>
+    <p>The image is stored as a binary blob in the database.</p>
+    <p>The image is encoded to base64 and returned in the response.</p>
+
+</body>
+</html>

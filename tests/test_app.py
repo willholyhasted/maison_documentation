@@ -33,10 +33,10 @@ def client():
         response = client.post(
             "/documents",
             data=test_data,
-            files={
-                "file": (io.BytesIO(test_file_content), "test.pdf", "application/pdf")
-            },
+            files={"file": (test_file, "application/pdf")},
         )
+
+        assert response.status_code == 201
 
         conn.commit()
         cur.close()

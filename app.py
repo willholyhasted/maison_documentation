@@ -1,5 +1,5 @@
 # app.py
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import os
@@ -54,11 +54,6 @@ def init_db():
 # Initialize the database when the app starts
 with app.app_context():
     init_db()
-
-
-@app.route("/")
-def index():
-    return "Hello, World! This is the documents service. And it is working!"
 
 
 @app.route("/documents", methods=["POST"])
@@ -206,6 +201,11 @@ def query_documents():
     finally:
         cur.close()
         conn.close()
+
+
+@app.route("/")
+def api_docs():
+    return render_template("api_documentation.html")
 
 
 if __name__ == "__main__":
