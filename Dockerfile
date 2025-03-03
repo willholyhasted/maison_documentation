@@ -10,6 +10,12 @@ COPY requirements.txt .
 # Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Create templates directory
+RUN mkdir -p templates
+
+# Copy the templates directory
+COPY templates/ /app/templates/
+
 # Copy the rest of the application
 COPY . .
 

@@ -204,7 +204,7 @@ def query_documents():
 
 
 @app.route("/")
-def api_docs():
+def route():
     return render_template("api_documentation.html")
 
 
