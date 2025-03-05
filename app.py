@@ -132,8 +132,8 @@ def add_document():
                 file_type,
                 psycopg2.Binary(file_data),  # Convert to binary
                 data["property_id"],
-                data["buyer_id"],
-                data["seller_id"],
+                data.get("buyer_id"),
+                data.get("seller_id"),
                 data["uploaded_by"],
                 data["document_tag"],
             ),
