@@ -39,8 +39,8 @@ def init_db():
             image BYTEA NOT NULL,  
             datetime_uploaded TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             property_id INTEGER NOT NULL,
-            buyer_id INTEGER NOT NULL,
-            seller_id INTEGER NOT NULL,
+            buyer_id INTEGER,
+            seller_id INTEGER,
             uploaded_by VARCHAR(50) CHECK (uploaded_by IN ('buyer', 'seller')),
             document_tag VARCHAR(50) NOT NULL
         )
@@ -80,26 +80,39 @@ def add_document():
     data = request.form
     required_fields = [
         "property_id",
-        "buyer_id",
-        "seller_id",
         "uploaded_by",
         "document_tag",
     ]
 
-    # Check which fields are missing
+    # Check that all the required fields are present
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
         print(f"Missing fields: {missing_fields}")
         return jsonify({"error": f"Missing required fields: {missing_fields}"}), 400
 
-    if data["uploaded_by"] not in ["buyer", "seller", ""]:
+    # Check that the uploaded_by field is either 'buyer', 'seller'
+    if data["uploaded_by"] not in ["buyer", "seller"]:
         print(f"Invalid uploaded_by value: {data['uploaded_by']}")
         return (
-            jsonify(
-                {"error": "uploaded_by must be either 'buyer' or 'seller' or empty"}
-            ),
+            jsonify({"error": "uploaded_by must be either 'buyer' or 'seller'"}),
             400,
         )
+
+    # Check that the buyer_id or seller_id field is present depending on the uploaded_by field
+    if data["uploaded_by"] == "buyer":
+        if "buyer_id" not in data:
+            return (
+                jsonify({"error": "buyer_id is required when uploaded_by is 'buyer'"}),
+                400,
+            )
+    elif data["uploaded_by"] == "seller":
+        if "seller_id" not in data:
+            return (
+                jsonify(
+                    {"error": "seller_id is required when uploaded_by is 'seller'"}
+                ),
+                400,
+            )
 
     # Read file binary data
     file_data = file.read()
