@@ -9,6 +9,9 @@
             font-family: Arial, sans-serif;
             margin: 20px;
             line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
         }
         h1, h2, h3 {
             color: #333;
@@ -17,90 +20,323 @@
             background-color: #f4f4f4;
             padding: 10px;
             border-radius: 5px;
+            overflow-x: auto;
+        }
+        .endpoint {
+            margin-bottom: 30px;
+            border-left: 4px solid #0066cc;
+            padding-left: 15px;
+        }
+        .required {
+            color: #cc0000;
+            font-weight: bold;
+        }
+        .optional {
+            color: #666;
+            font-style: italic;
+        }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .method {
+            display: inline-block;
+            padding: 3px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .get {
+            background-color: #61affe;
+            color: white;
+        }
+        .post {
+            background-color: #49cc90;
+            color: white;
         }
     </style>
 </head>
 <body>
-    <h1>API Documentation</h1>
+    <h1>Document Management API Documentation</h1>
     <p>This API allows you to manage documents, including uploading and querying them.</p>
+
+    <h2>Base URL</h2>
+    <p>All endpoints are relative to the base URL: <code>http://127.0.0.1:5001</code></p>
 
     <h2>Endpoints</h2>
 
-    <h3>1. Add Document</h3>
-    <p><strong>POST /documents</strong></p>
-    <p>Uploads a new document.</p>
-    <h4>Request Body:</h4>
-    <pre>
-    {
-        "file": <file>,  // The document file (multipart/form-data)
-        "property_id": <integer>,
-        "buyer_id": <integer>,
-        "seller_id": <integer>,
-        "uploaded_by": <string>,  // "buyer" or "seller"
-        "document_tag": <string>
-    }
-    </pre>
-    <h4>Response:</h4>
-    <pre>
-    {
-        "message": "Document added successfully",
-        "document_id": <integer>
-    }
-    </pre>
+    <div class="endpoint">
+        <h3>1. Add Document to Main Table</h3>
+        <p><span class="method post">POST</span> <code>/documents</code></p>
+        <p>Uploads a new document to the main documents table.</p>
+        
+        <h4>Request Parameters:</h4>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>file</td>
+                <td>File</td>
+                <td class="required">Required</td>
+                <td>The document file (multipart/form-data)</td>
+            </tr>
+            <tr>
+                <td>property_id</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Property identifier</td>
+            </tr>
+            <tr>
+                <td>uploaded_by</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Must be either "buyer" or "seller"</td>
+            </tr>
+            <tr>
+                <td>document_tag</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Type or category of document</td>
+            </tr>
+            <tr>
+                <td>buyer_id</td>
+                <td>String</td>
+                <td class="required">Required if uploaded_by="buyer"</td>
+                <td>Buyer identifier</td>
+            </tr>
+            <tr>
+                <td>seller_id</td>
+                <td>String</td>
+                <td class="required">Required if uploaded_by="seller"</td>
+                <td>Seller identifier</td>
+            </tr>
+        </table>
+        
+        <h4>Response:</h4>
+        <pre>
+{
+    "message": "Document added successfully",
+    "document_id": 123
+}
+        </pre>
+    </div>
 
-    <h3>2. Query Documents</h3>
-    <p><strong>GET /documents/query</strong></p>
-    <p>Retrieves documents based on optional filters.</p>
-    <h4>Query Parameters:</h4>
-    <pre>
-    ?uploaded_by=<string>  // "buyer" or "seller"
-    &property_id=<integer>
-    &buyer_id=<integer>
-    &seller_id=<integer>
-    &document_tag=<string>
-    </pre>
-    <h4>Response:</h4>
-    <pre>
-    {
-        "count": <integer>,
-        "documents": [
-            {
-                "document_id": <integer>,
-                "filename": <string>,
-                "file_type": <string>,
-                "image_url": <string>,  // Base64 encoded image
-                "datetime_uploaded": <string>,
-                "property_id": <integer>,
-                "buyer_id": <integer>,
-                "seller_id": <integer>,
-                "uploaded_by": <string>,
-                "document_tag": <string>
-            }
-        ]
-    }
-    </pre>
+    <div class="endpoint">
+        <h3>2. Add Document to Buyer Table</h3>
+        <p><span class="method post">POST</span> <code>/documents/buyer</code></p>
+        <p>Uploads a new document to the buyer documents table (for documents not associated with a property).</p>
+        
+        <h4>Request Parameters:</h4>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>file</td>
+                <td>File</td>
+                <td class="required">Required</td>
+                <td>The document file (multipart/form-data)</td>
+            </tr>
+            <tr>
+                <td>buyer_id</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Buyer identifier</td>
+            </tr>
+            <tr>
+                <td>document_tag</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Type or category of document</td>
+            </tr>
+        </table>
+        
+        <h4>Response:</h4>
+        <pre>
+{
+    "message": "Document added successfully",
+    "document_id": 123
+}
+        </pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>3. Query Documents from Main Table</h3>
+        <p><span class="method get">GET</span> <code>/documents/query</code></p>
+        <p>Retrieves documents from the main documents table based on optional filters.</p>
+        
+        <h4>Query Parameters:</h4>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>property_id</td>
+                <td>String</td>
+                <td class="optional">Optional</td>
+                <td>Filter by property identifier</td>
+            </tr>
+            <tr>
+                <td>uploaded_by</td>
+                <td>String</td>
+                <td class="optional">Optional</td>
+                <td>Filter by uploader type ("buyer" or "seller")</td>
+            </tr>
+            <tr>
+                <td>buyer_id</td>
+                <td>String</td>
+                <td class="optional">Optional</td>
+                <td>Filter by buyer identifier</td>
+            </tr>
+            <tr>
+                <td>seller_id</td>
+                <td>String</td>
+                <td class="optional">Optional</td>
+                <td>Filter by seller identifier</td>
+            </tr>
+            <tr>
+                <td>document_tag</td>
+                <td>String</td>
+                <td class="optional">Optional</td>
+                <td>Filter by document type/category</td>
+            </tr>
+        </table>
+        
+        <h4>Response:</h4>
+        <pre>
+{
+    "count": 2,
+    "documents": [
+        {
+            "document_id": 123,
+            "filename": "contract.pdf",
+            "file_type": "application/pdf",
+            "image_url": "data:application/pdf;base64,JVBERi0xLjMKJcTl8uXrp...",
+            "datetime_uploaded": "2023-05-15T14:30:45.123456",
+            "property_id": "456",
+            "buyer_id": "789",
+            "seller_id": "101",
+            "uploaded_by": "buyer",
+            "document_tag": "contract"
+        },
+        {
+            "document_id": 124,
+            "filename": "deed.pdf",
+            "file_type": "application/pdf",
+            "image_url": "data:application/pdf;base64,JVBERi0xLjQKJcOkw7zD...",
+            "datetime_uploaded": "2023-05-14T10:15:22.654321",
+            "property_id": "456",
+            "buyer_id": "789",
+            "seller_id": "101",
+            "uploaded_by": "seller",
+            "document_tag": "deed"
+        }
+    ]
+}
+        </pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>4. Query Documents from Buyer Table</h3>
+        <p><span class="method get">GET</span> <code>/documents/query/buyer</code></p>
+        <p>Retrieves documents from the buyer documents table.</p>
+        
+        <h4>Query Parameters:</h4>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>buyer_id</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Filter by buyer identifier</td>
+            </tr>
+            <tr>
+                <td>document_tag</td>
+                <td>String</td>
+                <td class="optional">Optional</td>
+                <td>Filter by document type/category</td>
+            </tr>
+        </table>
+        
+        <h4>Response:</h4>
+        <pre>
+{
+    "count": 1,
+    "documents": [
+        {
+            "document_id": 125,
+            "filename": "id_verification.jpg",
+            "file_type": "image/jpeg",
+            "image_url": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAYABgAAD...",
+            "datetime_uploaded": "2023-05-16T09:45:12.987654",
+            "buyer_id": "789",
+            "document_tag": "identification"
+        }
+    ]
+}
+        </pre>
+    </div>
 
     <h2>Example Usage</h2>
-    <h3>Adding a Document</h3>
+    
+    <h3>Adding a Document to Main Table</h3>
     <pre>
-    curl -X POST http://127.0.0.1:5001/documents \
-        -F "file=@/path/to/document.pdf" \
-        -F "property_id=123" \
-        -F "buyer_id=456" \
-        -F "seller_id=789" \
-        -F "uploaded_by=buyer" \
-        -F "document_tag=contract"
+curl -X POST http://127.0.0.1:5001/documents \
+    -F "file=@/path/to/document.pdf" \
+    -F "property_id=456" \
+    -F "buyer_id=789" \
+    -F "uploaded_by=buyer" \
+    -F "document_tag=contract"
     </pre>
 
-    <h3>Querying Documents</h3>
+    <h3>Adding a Document to Buyer Table</h3>
     <pre>
-    curl "http://127.0.0.1:5001/documents/query?property_id=123"
+curl -X POST http://127.0.0.1:5001/documents/buyer \
+    -F "file=@/path/to/id.jpg" \
+    -F "buyer_id=789" \
+    -F "document_tag=identification"
+    </pre>
+
+    <h3>Querying Documents from Main Table</h3>
+    <pre>
+curl "http://127.0.0.1:5001/documents/query?property_id=456&uploaded_by=buyer"
+    </pre>
+
+    <h3>Querying Documents from Buyer Table</h3>
+    <pre>
+curl "http://127.0.0.1:5001/documents/query/buyer?buyer_id=789"
     </pre>
 
     <h2>Notes</h2>
-    <p>The API uses Azure PostgreSQL for database storage.</p>
-    <p>The image is stored as a binary blob in the database.</p>
-    <p>The image is encoded to base64 and returned in the response.</p>
-
+    <ul>
+        <li>All document files are stored as binary data in the database.</li>
+        <li>When querying, document images are returned as base64-encoded data URLs.</li>
+        <li>The main documents table is for property-related documents.</li>
+        <li>The buyer documents table is for buyer-specific documents not related to a property.</li>
+        <li>Ensure that your database is properly configured and that the API is running before making requests.</li>
+    </ul>
 </body>
 </html>

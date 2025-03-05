@@ -19,7 +19,6 @@ def client():
 
         # Create test file data
         test_file_content = b"Test file content"
-        test_file = (io.BytesIO(test_file_content), "test.pdf")
 
         # Insert test document using multipart form data
         test_data = {
@@ -30,10 +29,13 @@ def client():
             "document_tag": "test_document",
         }
 
+        # Correct way to pass files to test client
         response = client.post(
             "/documents",
             data=test_data,
-            files={"file": (test_file, "application/pdf")},
+            files={
+                "file": (io.BytesIO(test_file_content), "test.pdf", "application/pdf")
+            },
         )
 
         assert response.status_code == 201
@@ -81,7 +83,7 @@ def test_query_documents_empty(client):
     assert "image_url" in doc
     assert doc["filename"] == "test.pdf"
     assert doc["file_type"] == "application/pdf"
-    assert doc["property_id"] == 999
+    assert doc["property_id"] == "999"  # Note: property_id is now a string
 
 
 def test_query_documents_by_property(client):
@@ -93,7 +95,7 @@ def test_query_documents_by_property(client):
     assert len(data["documents"]) == 1
     doc = data["documents"][0]
     assert doc["filename"] == "test.pdf"
-    assert doc["property_id"] == 999
+    assert doc["property_id"] == "999"  # Note: property_id is now a string
     assert "image_url" in doc
     assert doc["image_url"].startswith("data:application/pdf;base64,")
 
@@ -143,7 +145,7 @@ def test_add_document_missing_file(client):
 
     response = client.post("/documents", data=data)
     assert response.status_code == 400
-    assert "No file provided" in response.get_json()["error"]
+    assert "Missing mandatory parameters" in response.get_json()["error"]
 
 
 def test_add_document_missing_fields(client):
@@ -164,4 +166,29 @@ def test_add_document_missing_fields(client):
         files={"file": (io.BytesIO(file_content), "test.pdf", "application/pdf")},
     )
     assert response.status_code == 400
-    assert "Missing required fields" in response.get_json()["error"]
+    assert "Missing mandatory parameters" in response.get_json()["error"]
+
+
+def test_add_document_buyer(client):
+    """Test adding a document to the buyer table"""
+    file_content = b"Buyer document content"
+
+    data = {
+        "buyer_id": "888",
+        "document_tag": "identification",
+    }
+
+    response = client.post(
+        "/documents/buyer",
+        data=data,
+        files={"file": (io.BytesIO(file_content), "id.jpg", "image/jpeg")},
+    )
+    assert response.status_code == 201
+    assert "document_id" in response.get_json()
+
+    # Verify the document was added
+    response = client.get("/documents/query/buyer?buyer_id=888")
+    data = response.get_json()
+    assert len(data["documents"]) == 1
+    assert data["documents"][0]["filename"] == "id.jpg"
+    assert data["documents"][0]["document_tag"] == "identification"
