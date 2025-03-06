@@ -15,6 +15,7 @@ def client():
         # Create tables and clean existing test data
         init_db()
         cur.execute("DELETE FROM documents")
+        cur.execute("DELETE FROM documents_buyer")  # Also clean buyer documents table
         conn.commit()
 
         # Create test file data
@@ -182,3 +183,40 @@ def test_add_document_buyer(client):
     assert len(data["documents"]) == 1
     assert data["documents"][0]["filename"] == "id.jpg"
     assert data["documents"][0]["document_tag"] == "identification"
+
+
+def test_delete_document_buyer(client):
+    """Test deleting a document from the buyer table"""
+    # First, add a document to delete
+    file_content = b"Buyer document to delete"
+
+    data = {
+        "buyer_id": "999",  # Using a different ID to avoid conflicts
+        "document_tag": "passport",
+        "file": (io.BytesIO(file_content), "passport.jpg", "image/jpeg"),
+    }
+
+    # Add the document
+    response = client.post(
+        "/documents/buyer", data=data, content_type="multipart/form-data"
+    )
+    assert response.status_code == 201
+
+    # Verify it was added
+    response = client.get("/documents/query/buyer?buyer_id=999")
+    assert response.status_code == 200
+    initial_data = response.get_json()
+    assert initial_data["count"] >= 1
+
+    # Delete the document
+    response = client.delete(
+        "/documents/buyer/delete?buyer_id=999&document_tag=passport"
+    )
+    assert response.status_code == 200
+    assert "Document deleted successfully" in response.get_json()["message"]
+
+    # Verify it was deleted
+    response = client.get("/documents/query/buyer?buyer_id=999&document_tag=passport")
+    assert response.status_code == 200
+    final_data = response.get_json()
+    assert final_data["count"] == 0
