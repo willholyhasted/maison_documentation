@@ -64,9 +64,9 @@ def init_db():
     conn.close()
 
 
-# Initialize the database when the app starts
-with app.app_context():
-    init_db()
+# UNCOMMENT TO INITIALIZE THE DATABASE
+# with app.app_context():
+#     init_db()
 
 
 @app.route("/")
@@ -411,6 +411,119 @@ def query_documents_buyer():
             del doc["image_data"]  # Remove raw base64 data from response
 
         return jsonify({"count": len(documents), "documents": documents})
+    except psycopg2.Error as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.route("/documents/delete", methods=["DELETE"])
+def delete_document():
+    # We need property id, uploaded by, document tag, buyer id
+    property_id = request.args.get("property_id")
+    uploaded_by = request.args.get("uploaded_by")
+    document_tag = request.args.get("document_tag")
+    buyer_id = request.args.get("buyer_id", None)
+
+    if not property_id or not uploaded_by or not document_tag:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    if not buyer_id and uploaded_by == "buyer":
+        return (
+            jsonify({"error": "buyer_id is required when uploaded_by is 'buyer'"}),
+            400,
+        )
+
+    # Check if the tag is valid - see document_tags.txt for all possible tags
+    valid_tags = [
+        "property_deed",
+        "epc_certificate",
+        "gas_certificate",
+        "electrical_certificate",
+        "floor_plan",
+        "id_verification",
+        "proof_address",
+        "property_valuation",
+        "other",
+    ]
+    if document_tag not in valid_tags:
+        return jsonify({"error": "Invalid document tag"}), 400
+
+    # Build query conditions
+    conditions = []
+    params = []
+
+    conditions.append("uploaded_by = %s")
+    params.append(uploaded_by)
+
+    conditions.append("property_id = %s")
+    params.append(property_id)
+
+    conditions.append("document_tag = %s")
+    params.append(document_tag)
+
+    if uploaded_by == "buyer":
+        conditions.append("buyer_id = %s")
+        params.append(buyer_id)
+
+    # Construct the WHERE clause
+    where_clause = " AND ".join(conditions) if conditions else "FALSE"
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        query = f"""
+            DELETE FROM documents
+            WHERE {where_clause}
+        """
+        cur.execute(query, params)
+        conn.commit()
+        return jsonify({"message": "Document deleted successfully"}), 200
+    except psycopg2.Error as e:
+        return jsonify({"error": str(e)}), 400
+    finally:
+        cur.close()
+        conn.close()
+
+
+@app.route("/documents/buyer/delete", methods=["DELETE", "GET"])
+def delete_document_buyer():
+    # We need buyer id, document tag
+    document_tag = request.args.get("document_tag")
+    buyer_id = request.args.get("buyer_id")
+
+    if not buyer_id or not document_tag:
+        return jsonify({"error": "Missing required parameters"}), 400
+
+    # Check if the tag is valid - see document_tags.txt for all possible tags
+    valid_tags = ["bank_statements", "passport", "proof_address", "other"]
+    if document_tag not in valid_tags:
+        return jsonify({"error": "Invalid document tag"}), 400
+
+    # Build query conditions
+    conditions = []
+    params = []
+
+    conditions.append("document_tag = %s")
+    params.append(document_tag)
+
+    conditions.append("buyer_id = %s")
+    params.append(buyer_id)
+
+    # Construct the WHERE clause
+    where_clause = " AND ".join(conditions) if conditions else "FALSE"
+
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+    try:
+        query = f"""
+            DELETE FROM documents_buyer
+            WHERE {where_clause}
+        """
+        cur.execute(query, params)
+        conn.commit()
+        return jsonify({"message": "Document deleted successfully"}), 200
     except psycopg2.Error as e:
         return jsonify({"error": str(e)}), 400
     finally:

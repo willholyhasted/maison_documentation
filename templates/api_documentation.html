@@ -62,11 +62,15 @@
             background-color: #49cc90;
             color: white;
         }
+        .delete {
+            background-color: #f93e3e;
+            color: white;
+        }
     </style>
 </head>
 <body>
     <h1>Document Management API Documentation</h1>
-    <p>This API allows you to manage documents, including uploading and querying them.</p>
+    <p>This API allows you to manage documents, including uploading, querying, and deleting them.</p>
 
     <h2>Base URL</h2>
     <p>All endpoints are relative to the base URL: <code>http://127.0.0.1:5001</code></p>
@@ -300,6 +304,94 @@
         </pre>
     </div>
 
+    <div class="endpoint">
+        <h3>5. Delete Document from Main Table</h3>
+        <p><span class="method delete">DELETE</span> <code>/documents/delete</code></p>
+        <p>Deletes a document from the main documents table based on provided criteria.</p>
+        
+        <h4>Query Parameters:</h4>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>property_id</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Property identifier</td>
+            </tr>
+            <tr>
+                <td>uploaded_by</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Must be either "buyer" or "seller"</td>
+            </tr>
+            <tr>
+                <td>document_tag</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Type or category of document</td>
+            </tr>
+            <tr>
+                <td>buyer_id</td>
+                <td>String</td>
+                <td class="required">Required if uploaded_by="buyer"</td>
+                <td>Buyer identifier</td>
+            </tr>
+            <tr>
+                <td>seller_id</td>
+                <td>String</td>
+                <td class="required">Required if uploaded_by="seller"</td>
+                <td>Seller identifier</td>
+            </tr>
+        </table>
+        
+        <h4>Response:</h4>
+        <pre>
+{
+    "message": "Document deleted successfully"
+}
+        </pre>
+    </div>
+
+    <div class="endpoint">
+        <h3>6. Delete Document from Buyer Table</h3>
+        <p><span class="method delete">DELETE</span> <code>/documents/buyer/delete</code></p>
+        <p>Deletes a document from the buyer documents table.</p>
+        
+        <h4>Query Parameters:</h4>
+        <table>
+            <tr>
+                <th>Parameter</th>
+                <th>Type</th>
+                <th>Required</th>
+                <th>Description</th>
+            </tr>
+            <tr>
+                <td>buyer_id</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Buyer identifier</td>
+            </tr>
+            <tr>
+                <td>document_tag</td>
+                <td>String</td>
+                <td class="required">Required</td>
+                <td>Type or category of document</td>
+            </tr>
+        </table>
+        
+        <h4>Response:</h4>
+        <pre>
+{
+    "message": "Document deleted successfully"
+}
+        </pre>
+    </div>
+
     <h2>Example Usage</h2>
     
     <h3>Adding a Document to Main Table</h3>
@@ -330,6 +422,16 @@ curl "http://127.0.0.1:5001/documents/query?property_id=456&uploaded_by=buyer"
 curl "http://127.0.0.1:5001/documents/query/buyer?buyer_id=789"
     </pre>
 
+    <h3>Deleting a Document from Main Table</h3>
+    <pre>
+curl -X DELETE "http://127.0.0.1:5001/documents/delete?property_id=456&uploaded_by=buyer&document_tag=contract&buyer_id=789"
+    </pre>
+
+    <h3>Deleting a Document from Buyer Table</h3>
+    <pre>
+curl -X DELETE "http://127.0.0.1:5001/documents/buyer/delete?buyer_id=789&document_tag=identification"
+    </pre>
+
     <h2>Notes</h2>
     <ul>
         <li>All document files are stored as binary data in the database.</li>
@@ -337,6 +439,7 @@ curl "http://127.0.0.1:5001/documents/query/buyer?buyer_id=789"
         <li>The main documents table is for property-related documents.</li>
         <li>The buyer documents table is for buyer-specific documents not related to a property.</li>
         <li>Ensure that your database is properly configured and that the API is running before making requests.</li>
+        <li><strong>Important:</strong> DELETE operations require the HTTP DELETE method. Make sure to use the -X DELETE flag with curl or the appropriate method in your API client.</li>
     </ul>
 </body>
 </html>

@@ -46,7 +46,7 @@ def client():
         # Cleanup after tests
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("DELETE FROM documents WHERE property_id = 999")
+        cur.execute("DELETE FROM documents WHERE property_id = '999'")
         conn.commit()
         cur.close()
         conn.close()

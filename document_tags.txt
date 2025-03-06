@@ -1,0 +1,48 @@
+MaiSON Document Tags Reference
+============================
+
+SELLER DOCUMENT TAGS
+-------------------
+1. Property Documents:
+   - property_deed: Title deed or proof of ownership document
+   - epc_certificate: Energy Performance Certificate
+   - gas_certificate: Gas Safety Certificate (optional)
+   - electrical_certificate: Electrical Safety Certificate
+   - floor_plan: Detailed floor plan of the property
+
+2. Legal Documents:
+   - id_verification: Government-issued ID for verification
+   - proof_address: Proof of Address (utility bill or bank statement)
+
+3. Financial Documents:
+   - property_valuation: Professional property valuation report (optional)
+
+4. Other:
+   - other: Default category for unspecified documents
+
+
+BUYER DOCUMENT TAGS
+------------------
+1. Financial Documents:
+   - bank_statements: Last 3 months of bank statements
+
+2. Identity Documents:
+   - passport: Valid passport or government-issued ID
+   - proof_address: Utility bill or bank statement showing address
+
+3. Other:
+   - other: Default category for unspecified documents
+
+
+USAGE NOTES
+----------
+- Seller documents should be uploaded using DocumentService.uploadDocument()
+- Buyer documents should be uploaded using DocumentService.uploadBuyerDocument()
+- Required vs Optional is handled by the frontend UI
+- Documents are automatically categorized based on their tags
+- The 'other' tag should be used when no specific tag matches the document type
+
+API ENDPOINTS
+------------
+Seller: /documents/upload
+Buyer: /documents/buyer
